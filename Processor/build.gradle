@@ -47,7 +47,7 @@ dependencies {
 
 }
 
-task printProperties << {
+task printProperties {
 	println project.name
 	println project.path
 	println project.group
