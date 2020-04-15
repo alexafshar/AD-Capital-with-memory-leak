@@ -2,6 +2,9 @@ package com.appdynamics.loan.portal;
 
 import com.appdynamics.loan.common.LoanApplication;
 import com.appdynamics.loan.common.UserData;
+import com.appdynamics.loan.portal.util.BadKey;
+import com.appdynamics.loan.portal.util.GoodKey;
+import com.appdynamics.loan.portal.util.Key;
 import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -16,6 +19,8 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.net.URI;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 
 /**
@@ -106,6 +111,26 @@ public class SubmitApplication extends javax.servlet.http.HttpServlet {
             log.error("Error Submitting Application" + ex.getMessage());
         }
 
+        //introduces memory leak every time a new loan application is submitted
+        trackApplication(application);
+    }
+
+    Map<Key,String> map = new HashMap<>();
+    private enum KeyType {
+        BAD,
+        GOOD
+    }
+    private KeyType keyType = KeyType.BAD;
+    private int max = 10000;
+    private long length = 1024 * 1024;
+
+    private void trackApplication(LoanApplication application){
+        for ( int i = 0; i < max; i++) {
+            Key key = KeyType.GOOD.equals(keyType) ? new GoodKey(i, length) : new BadKey(i, length);
+            if (!map.containsKey(key)) {
+                map.put(key, "Number:" + i);
+            }
+        }
     }
 
     private boolean useExternalService()
